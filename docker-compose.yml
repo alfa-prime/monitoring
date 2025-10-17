@@ -26,9 +26,13 @@ services:
     container_name: grafana
     restart: unless-stopped
     ports:
-      - "3000:3000" # Веб-интерфейс Grafana
+      - "3001:3000" # Веб-интерфейс Grafana
     volumes:
       # Подключаем папку для постоянного хранения дашбордов и настроек
       - ./grafana/data:/var/lib/grafana
     networks:
       - monitor-net
+    environment:
+      # Эта переменная сообщает Grafana, по какому URL она будет доступна извне.
+      # Укажите протокол, IP-адрес и ПУБЛИЧНЫЙ порт (тот, что слушает Nginx).
+      - GF_SERVER_ROOT_URL=http://192.168.100.249:3001
