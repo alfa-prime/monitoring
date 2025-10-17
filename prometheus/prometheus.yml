@@ -1,0 +1,31 @@
+global:
+  scrape_interval: 15s # Собирать метрики каждые 15 секунд
+
+scrape_configs:
+  # Задача для мониторинга самого себя (Prometheus)
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # --- ГЛАВНАЯ ЧАСТЬ ---
+  # Задача для мониторинга всех наших микросервисов
+  - job_name: "microservices"
+    # Используем DNS-обнаружение Docker. Prometheus будет автоматически находить
+    # IP-адреса контейнеров по их именам в общей сети.
+    dns_sd_configs:
+      - names:
+          # Список имен контейнеров, за которыми нужно следить.
+          # Сейчас здесь только один сервис, но мы будем добавлять сюда новые.
+          - "vmp_extension_prod"
+        type: "A"
+        port: 8000 # Порт, на котором сервисы отдают метрики ВНУТРИ Docker-сети
+
+    # Этот блок позволяет "перемаркировать" метрики на лету.
+    relabel_configs:
+      # Создаем новую метку 'service_name' из имени контейнера.
+      # Docker DNS отдает имя контейнера в метке __meta_dns_name.
+      - source_labels: [__meta_dns_name]
+        # Извлекаем первую часть имени (vmp_extension_app -> vmp_extension)
+        regex: '([a-zA-Z0-9_]+)_prod'
+        target_label: service_name
+        replacement: '$1'
